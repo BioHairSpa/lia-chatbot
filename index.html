@@ -1,526 +1,138 @@
 <!DOCTYPE html>
-<html lang="de"><head>
+<html lang="de">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bio Hair Spa – Chatbot</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: transparent; width: 100vw; height: 100vh; overflow: hidden; pointer-events: none; }
-  #bhs-widget { font-family: 'Jost', sans-serif; pointer-events: all; }
-  #bhs-widget { position: fixed; right: 22px; bottom: 22px; z-index: 2147483000; display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
-  #bhs-panel {
-    width: 384px; max-width: calc(100vw - 32px);
-    height: 568px; max-height: calc(100vh - 110px);
-    background: #FBFAF6; border-radius: 22px;
-    box-shadow: 0 24px 60px -18px rgba(40,48,40,.45), 0 4px 14px rgba(40,48,40,.10);
-    border: 1px solid rgba(56,70,58,.10);
-    display: none; flex-direction: column; overflow: hidden;
-    transform-origin: bottom right;
-  }
-  #bhs-widget.open #bhs-panel { display: flex; animation: bhs-slide .34s cubic-bezier(.2,.8,.25,1) both; }
-  @keyframes bhs-slide { from { transform: translateY(16px) scale(.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-  @keyframes bhs-pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  @keyframes bhs-msg { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  @keyframes bhs-dot { 0%, 60%, 100% { transform: translateY(0); opacity: .35; } 30% { transform: translateY(-4px); opacity: 1; } }
-  @keyframes bhs-ring { from { transform: scale(1); opacity: .5; } to { transform: scale(1.9); opacity: 0; } }
-  .bhs-head { display: flex; align-items: center; gap: 13px; padding: 17px 18px; background: #38463A; color: #F3F0E8; }
-  .bhs-ava { position: relative; width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(150deg, #6E7C63, #4A5847); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: #F3F0E8; flex-shrink: 0; }
-  .bhs-ava .dot { position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; background: #9DBE8A; border: 2px solid #38463A; }
-  .bhs-name { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 600; line-height: 1.1; }
-  .bhs-sub { font-size: 11.5px; letter-spacing: .04em; color: rgba(243,240,232,.72); }
-  .bhs-x { width: 32px; height: 32px; border: none; background: rgba(243,240,232,.12); color: #F3F0E8; border-radius: 50%; cursor: pointer; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: background .15s; }
-  .bhs-x:hover { background: rgba(243,240,232,.24); }
-  .bhs-scroll { flex: 1; overflow-y: auto; padding: 20px 16px 8px; display: flex; flex-direction: column; gap: 12px; background: #FBFAF6; }
-  .bhs-scroll::-webkit-scrollbar { width: 6px; }
-  .bhs-scroll::-webkit-scrollbar-thumb { background: #D9D4C7; border-radius: 10px; }
-  .bhs-row { display: flex; flex-direction: column; animation: bhs-msg .26s ease both; }
-  .bhs-row.user { align-items: flex-end; }
-  .bhs-row.bot { align-items: flex-start; }
-  .bhs-bubble { font-size: 14px; line-height: 1.55; letter-spacing: .005em; }
-  .bhs-row.bot .bhs-bubble { max-width: 88%; padding: 12px 15px; border-radius: 16px 16px 16px 4px; background: #EEF0E9; color: #2B2B27; }
-  .bhs-row.user .bhs-bubble { max-width: 84%; padding: 11px 14px; border-radius: 16px 16px 4px 16px; background: #38463A; color: #F3F0E8; }
-  .bhs-bubble a { color: inherit; text-decoration: underline; text-underline-offset: 2px; font-weight: 500; }
-  .bhs-bubble strong { font-weight: 600; }
-  .bhs-typing { display: flex; align-items: center; gap: 5px; padding: 12px 15px; background: #EEF0E9; border-radius: 16px 16px 16px 4px; width: fit-content; }
-  .bhs-typing span { width: 7px; height: 7px; border-radius: 50%; background: #6E7C63; }
-  .bhs-typing span:nth-child(1) { animation: bhs-dot 1.2s infinite; }
-  .bhs-typing span:nth-child(2) { animation: bhs-dot 1.2s infinite .2s; }
-  .bhs-typing span:nth-child(3) { animation: bhs-dot 1.2s infinite .4s; }
-  .bhs-quick { display: flex; flex-wrap: wrap; gap: 7px; padding: 4px 16px 12px; }
-  .bhs-quick button { border: 1px solid rgba(56,70,58,.22); background: #F3F0E8; color: #38463A; font-family: 'Jost', sans-serif; font-size: 12.5px; padding: 8px 13px; border-radius: 100px; cursor: pointer; transition: all .15s; }
-  .bhs-quick button:hover { background: #38463A; color: #F3F0E8; border-color: #38463A; }
-  .bhs-input { display: flex; align-items: flex-end; gap: 9px; padding: 12px 14px 14px; border-top: 1px solid rgba(56,70,58,.10); background: #FBFAF6; }
-  .bhs-input textarea { flex: 1; resize: none; border: 1px solid rgba(56,70,58,.18); background: #fff; border-radius: 14px; padding: 11px 13px; font-family: 'Jost', sans-serif; font-size: 14px; color: #2B2B27; max-height: 96px; outline: none; line-height: 1.4; }
-  .bhs-input textarea:focus { border-color: #6E7C63; }
-  .bhs-send { width: 42px; height: 42px; flex-shrink: 0; border: none; border-radius: 13px; background: #38463A; color: #F3F0E8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
-  .bhs-send:hover { background: #2C3830; }
-  .bhs-foot { text-align: center; font-size: 10px; letter-spacing: .06em; color: #A7A496; padding: 0 0 9px; }
-  .bhs-launch { position: relative; width: 62px; height: 62px; border: none; border-radius: 50%; background: #38463A; color: #F3F0E8; cursor: pointer; box-shadow: 0 12px 28px -8px rgba(40,48,40,.55); display: flex; align-items: center; justify-content: center; animation: bhs-pop .4s cubic-bezier(.2,.9,.3,1.2) both; transition: transform .18s, background .18s; }
-  .bhs-launch:hover { transform: translateY(-2px); background: #2C3830; }
-  .bhs-launch .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid #9DBE8A; animation: bhs-ring 2.4s ease-out infinite; }
-  .bhs-launch .badge { position: absolute; top: 5px; right: 6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #B45F4D; color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid #38463A; }
-  #bhs-widget.open .bhs-launch .ring, #bhs-widget.open .bhs-launch .badge { display: none; }
-  .bhs-launch .ic-open { display: block; }
-  .bhs-launch .ic-close { display: none; }
-  #bhs-widget.open .bhs-launch .ic-open { display: none; }
-  #bhs-widget.open .bhs-launch .ic-close { display: block; }
+* { box-sizing: border-box; }
+html { width: 100%; height: 100%; }
+body { margin: 0; padding: 0; background: transparent; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+
+#bhs-widget {
+  font-family: 'Jost', sans-serif;
+  pointer-events: all;
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  left: auto !important;
+  top: auto !important;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+#bhs-panel {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  height: 540px;
+  max-height: calc(100vh - 110px);
+  background: #FBFAF6;
+  border-radius: 22px;
+  box-shadow: 0 24px 60px -18px rgba(40,48,40,.45), 0 4px 14px rgba(40,48,40,.10);
+  border: 1px solid rgba(56,70,58,.10);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+#bhs-widget.open #bhs-panel { display: flex; }
+.bhs-head { display:flex; align-items:center; gap:13px; padding:17px 18px; background:#38463A; color:#F3F0E8; border-radius: 22px 22px 0 0; }
+.bhs-ava { width:42px; height:42px; border-radius:50%; background:#6E7C63; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600; color:#F3F0E8; flex-shrink:0; }
+.bhs-name { font-size:20px; font-weight:600; }
+.bhs-sub { font-size:11px; color:rgba(243,240,232,.72); }
+.bhs-x { width:32px; height:32px; border:none; background:rgba(243,240,232,.12); color:#F3F0E8; border-radius:50%; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; }
+.bhs-scroll { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; background:#FBFAF6; }
+.bhs-row { display:flex; flex-direction:column; }
+.bhs-row.user { align-items:flex-end; }
+.bhs-row.bot { align-items:flex-start; }
+.bhs-bubble { font-size:14px; line-height:1.55; padding:11px 14px; max-width:88%; }
+.bhs-row.bot .bhs-bubble { border-radius:16px 16px 16px 4px; background:#EEF0E9; color:#2B2B27; }
+.bhs-row.user .bhs-bubble { border-radius:16px 16px 4px 16px; background:#38463A; color:#F3F0E8; }
+.bhs-bubble strong { font-weight:600; }
+.bhs-bubble a { color:inherit; text-decoration:underline; }
+.bhs-typing { display:flex; gap:5px; padding:12px 15px; background:#EEF0E9; border-radius:16px 16px 16px 4px; width:fit-content; }
+.bhs-typing span { width:7px; height:7px; border-radius:50%; background:#6E7C63; animation:bhs-dot 1.2s infinite; }
+.bhs-typing span:nth-child(2){animation-delay:.2s}
+.bhs-typing span:nth-child(3){animation-delay:.4s}
+@keyframes bhs-dot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:1}}
+.bhs-quick { display:flex; flex-wrap:wrap; gap:7px; padding:4px 16px 12px; background:#FBFAF6; }
+.bhs-quick button { border:1px solid rgba(56,70,58,.22); background:#F3F0E8; color:#38463A; font-size:12px; padding:7px 12px; border-radius:100px; cursor:pointer; font-family:inherit; }
+.bhs-input { display:flex; align-items:flex-end; gap:9px; padding:12px 14px; border-top:1px solid rgba(56,70,58,.10); background:#FBFAF6; }
+.bhs-input textarea { flex:1; resize:none; border:1px solid rgba(56,70,58,.18); background:#fff; border-radius:14px; padding:11px 13px; font-size:14px; color:#2B2B27; max-height:96px; outline:none; line-height:1.4; font-family:inherit; }
+.bhs-send { width:42px; height:42px; flex-shrink:0; border:none; border-radius:13px; background:#38463A; color:#F3F0E8; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.bhs-foot { text-align:center; font-size:10px; color:#A7A496; padding:0 0 9px; background:#FBFAF6; }
+.bhs-launch { width:62px; height:62px; border:none; border-radius:50%; background:#38463A; color:#F3F0E8; cursor:pointer; box-shadow:0 12px 28px -8px rgba(40,48,40,.55); display:flex; align-items:center; justify-content:center; }
+.ic-open { display:block; }
+.ic-close { display:none; }
+#bhs-widget.open .ic-open { display:none; }
+#bhs-widget.open .ic-close { display:block; }
 </style>
 </head>
 <body>
 <div id="bhs-widget">
   <div id="bhs-panel">
     <div class="bhs-head">
-      <div class="bhs-ava">L<span class="dot"></span></div>
-      <div style="flex:1; min-width:0;">
+      <div class="bhs-ava">L</div>
+      <div style="flex:1">
         <div class="bhs-name">Lia</div>
         <div class="bhs-sub">Deine Bio Hair Spa Beraterin</div>
       </div>
-      <button class="bhs-x" id="bhs-close" aria-label="Chat schließen">×</button>
+      <button class="bhs-x" id="bhs-close">×</button>
     </div>
     <div class="bhs-scroll" id="bhs-scroll"></div>
     <div class="bhs-quick" id="bhs-quick"></div>
     <div class="bhs-input">
       <textarea id="bhs-text" rows="1" placeholder="Schreib mir deine Frage…"></textarea>
-      <button class="bhs-send" id="bhs-send" aria-label="Senden">
+      <button class="bhs-send" id="bhs-send">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
       </button>
     </div>
     <div class="bhs-foot">KI-Assistentin · Antworten ohne Gewähr</div>
   </div>
-  <button class="bhs-launch" id="bhs-launch" aria-label="Chat öffnen">
-    <span class="ring"></span>
-    <span class="badge">1</span>
+  <button class="bhs-launch" id="bhs-launch">
     <svg class="ic-open" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
     <svg class="ic-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="6" y1="18" x2="18" y2="6"></line></svg>
   </button>
 </div>
-
 <script>
-(function () {
-  var AI_ENDPOINT = "https://www.biohairspa.de/_functions/chat";
+(function(){
+  var AI_ENDPOINT='https://www.biohairspa.de/_functions/chat';
+  var GREETING='Hey, schön dass du da bist! 🌿 Ich bin **Lia**, deine Beraterin vom Bio Hair Spa. Womit kann ich dir helfen?';
+  var QUICK=[{label:'Termin buchen',q:'Ich möchte gern einen Termin buchen.'},{label:'Öffnungszeiten',q:'Wann habt ihr geöffnet?'},{label:'Wo seid ihr?',q:'Welche Salons habt ihr?'},{label:'Preise',q:'Was kosten eure Leistungen?'}];
+  var SALONS={schwabing:{name:'Schwabing (Herzogstraße)',tel:'089 3081984',hours:'Di–Sa 09:00–19:00',book:'https://buchung.treatwell.de/ort/biohairspa-muenchen-herzogstr',damen:[{n:'Pflege & Styling',p:'49 €'},{n:'Pflege & Event-Style',p:'59 €'},{n:'Pflege, Schnitt & Styling',p:'75 €'}],herren:[{n:'Pflege, Schnitt & Styling',p:'55 €'}],farbe:[{n:'Ansatzcoloration & Styling',p:'124 €'},{n:'Coloration & Styling',p:'139 €'},{n:'Strähnen ½ Kopf & Styling',p:'148 €'},{n:'Strähnen ganzer Kopf & Styling',p:'173 €'},{n:'Balayage & Styling',p:'194 €'},{n:'Cover Grey & Styling',p:'139 €'}]},innenstadt:{name:'Innenstadt (Brunnstraße)',tel:'089 24212477',hours:'Di–Sa 09:00–19:00',book:'https://buchung.treatwell.de/ort/biohairspa-muenchen-innenstadt/',damen:[{n:'Pflege & Styling',p:'49 €'},{n:'Pflege & Event-Style',p:'59 €'},{n:'Pflege, Schnitt & Styling',p:'79 €'},{n:'Chef Cut (Gianluca)',p:'89 €'}],herren:[{n:'Pflege, Schnitt & Styling',p:'59 €'},{n:'Chef Cut (Gianluca)',p:'69 €'}],farbe:[{n:'Ansatzcoloration & Styling',p:'128 €'},{n:'Coloration & Styling',p:'144 €'},{n:'Strähnen ½ Kopf & Styling',p:'153 €'},{n:'Strähnen ganzer Kopf & Styling',p:'178 €'},{n:'Balayage & Styling',p:'204 €'},{n:'Cover Grey & Styling',p:'144 €'}]},feilitzsch:{name:'Feilitzschstraße (Derma Cosmetics)',tel:'089 38888866',hours:'Di–Sa 09:00–19:00',book:'https://buchung.treatwell.de/ort/biohairspa-derma-cosmetics-feilitzschstrasse/',damen:[{n:'Pflege & Styling',p:'49 €'},{n:'Pflege & Event-Style',p:'59 €'},{n:'Pflege, Schnitt & Styling',p:'79 €'}],herren:[{n:'Pflege, Schnitt & Styling',p:'59 €'}],farbe:[{n:'Ansatzcoloration & Styling',p:'128 €'},{n:'Coloration & Styling',p:'144 €'},{n:'Strähnen ½ Kopf & Styling',p:'153 €'},{n:'Strähnen ganzer Kopf & Styling',p:'178 €'},{n:'Balayage & Styling',p:'204 €'},{n:'Cover Grey & Styling',p:'144 €'}],massagen:[{n:'Körpermassage 60 Min.',p:'85 €'},{n:'Lomi Lomi 60 Min.',p:'95 €'},{n:'Ayurveda 60 Min.',p:'95 €'},{n:'Schwangerschaftsmassage',p:'95 €'},{n:'Anti-Stress Express',p:'50 €'},{n:'Cleopatra',p:'184 €'}],facials:[{n:'Gesichtsbehandlung 30 Min.',p:'50 €'},{n:'Gesichtsbehandlung 60 Min.',p:'90 €'}]},bogenhausen:{name:'Bogenhausen (Derma Cosmetics)',tel:'089 24210400',hours:'Di–Sa 09:00–19:00',book:'https://buchung.treatwell.de/ort/biohairspa-derma-cosmetics-bogenhausen/',damen:[{n:'Pflege & Styling',p:'49 €'},{n:'Pflege & Event-Style',p:'59 €'},{n:'Pflege, Schnitt & Styling',p:'79 €'},{n:'Chef Cut (Gianluca)',p:'89 €'}],herren:[{n:'Pflege, Schnitt & Styling',p:'59 €'},{n:'Chef Cut (Gianluca)',p:'69 €'}],farbe:[{n:'Ansatzcoloration & Styling',p:'128 €'},{n:'Coloration & Styling',p:'144 €'},{n:'Strähnen ½ Kopf & Styling',p:'153 €'},{n:'Strähnen ganzer Kopf & Styling',p:'178 €'},{n:'Balayage & Styling',p:'204 €'},{n:'Cover Grey & Styling',p:'144 €'}],massagen:[{n:'Körpermassage 60 Min.',p:'85 €'},{n:'Lomi Lomi 60 Min.',p:'95 €'},{n:'Ayurveda 60 Min.',p:'95 €'},{n:'Schwangerschaftsmassage',p:'95 €'},{n:'Anti-Stress Express',p:'50 €'},{n:'Cleopatra',p:'184 €'}],facials:[{n:'Gesichtsbehandlung 30 Min.',p:'50 €'},{n:'Gesichtsbehandlung 60 Min.',p:'90 €'}]}};
 
-  var GREETING = "Hey, schön dass du da bist! 🌿 Ich bin **Lia**, deine Beraterin vom Bio Hair Spa. Womit kann ich dir helfen?";
+  function detectSalon(t){if(/bogenhausen|ismaninger/.test(t))return'bogenhausen';if(/feilitzsch|freiheit|derma/.test(t))return'feilitzsch';if(/innenstadt|brunns|mitte/.test(t))return'innenstadt';if(/schwabing|herzog/.test(t))return'schwabing';return null;}
+  function liste(arr){return arr.map(function(i){return'• '+i.n+': **'+i.p+'**';}).join('\n');}
+  function localReply(raw){var t=(raw||'').toLowerCase();var sk=detectSalon(t);var s=sk?SALONS[sk]:null;var isDamen=/damen|dame|frau/.test(t);var isHerren=/herren|herr|mann/.test(t);var isSchnitt=/schnitt|schneiden/.test(t);var isFarbe=/farbe|färben|coloration|strähnen|balayage|ombré|ombre|ansatz|cover grey/.test(t);var isMassage=/massage|ayurveda|lomi|entspannung/.test(t);var isFacial=/facial|gesicht|face/.test(t);var isPreis=/preis|kostet|kosten|wie viel|wieviel/.test(t);var isTermin=/termin|buchen/.test(t);var isOeffnung=/öffnung|geöffnet|offen|zeiten|wann/.test(t);var isWo=/\bwo\b|adresse|standort|salon/.test(t);if(s&&(isPreis||isSchnitt||isFarbe||isMassage||isFacial)){var out='**'+s.name+'**\n\n';if(isDamen&&isSchnitt)out+='**Damen:**\n'+liste(s.damen);else if(isHerren&&isSchnitt)out+='**Herren:**\n'+liste(s.herren);else if(isSchnitt)out+='**Damen:**\n'+liste(s.damen)+'\n\n**Herren:**\n'+liste(s.herren);else if(isFarbe)out+='**Farbe:**\n'+liste(s.farbe);else if(isMassage&&s.massagen)out+='**Massagen:**\n'+liste(s.massagen);else if(isFacial&&s.facials)out+='**Gesicht:**\n'+liste(s.facials);else out+='Damen ab '+s.damen[0].p+' · Herren ab '+s.herren[0].p+' · Farbe ab '+s.farbe[0].p+(s.massagen?' · Massage ab '+s.massagen[0].p:'');out+='\n\n📞 '+s.tel+'\n'+s.book;return out;}if(!s&&isDamen&&isSchnitt)return'Damenschnitte:\n• Schwabing: ab 49 €\n• Innenstadt: ab 49 € (Chef Cut 89 €)\n• Feilitzschstraße: ab 49 €\n• Bogenhausen: ab 49 € (Chef Cut 89 €)';if(!s&&isHerren&&isSchnitt)return'Herrenschnitte:\n• Schwabing: 55 €\n• Innenstadt: 59 € (Chef Cut 69 €)\n• Feilitzschstraße: 59 €\n• Bogenhausen: 59 € (Chef Cut 69 €)';if(!s&&isMassage)return'Massagen in:\n• **Feilitzschstraße** – 📞 089 38888866\n• **Bogenhausen** – 📞 089 24210400\n\nAb 50 € bis 184 €.';if(isTermin){if(s)return'Termin bei **'+s.name+'**:\n'+s.book+'\n📞 '+s.tel;return'Alle Buchungslinks:\n• Schwabing: buchung.treatwell.de/ort/biohairspa-muenchen-herzogstr\n• Innenstadt: buchung.treatwell.de/ort/biohairspa-muenchen-innenstadt/\n• Feilitzschstraße: buchung.treatwell.de/ort/biohairspa-derma-cosmetics-feilitzschstrasse/\n• Bogenhausen: buchung.treatwell.de/ort/biohairspa-derma-cosmetics-bogenhausen/';}if(isOeffnung){if(s)return s.name+'\n🕑 '+s.hours;return'Alle Salons: **Di–Sa 09:00–19:00**\n(Mo & So geschlossen)';}if(isWo)return'4 Salons in München:\n• Schwabing – Herzogstraße 119\n• Innenstadt – Brunnstraße 9\n• Feilitzschstraße – Feilitzschstraße 14\n• Bogenhausen – Ismaninger Straße 42';return'Ich helfe dir gern! 🌿 Frag mich nach **Preisen**, **Terminen**, **Öffnungszeiten** oder unseren **4 Salons**.';}
 
-  var QUICK = [
-    { label: "Termin buchen", q: "Ich möchte gern einen Termin buchen." },
-    { label: "Öffnungszeiten", q: "Wann habt ihr geöffnet?" },
-    { label: "Wo seid ihr?", q: "Welche Salons habt ihr?" },
-    { label: "Preise", q: "Was kosten eure Leistungen?" }
-  ];
+  var history=[],greeted=false,busy=false;
+  var widget=document.getElementById('bhs-widget');
+  var scroll=document.getElementById('bhs-scroll');
+  var quickWrap=document.getElementById('bhs-quick');
+  var input=document.getElementById('bhs-text');
 
-  var SALONS = {
-    schwabing: {
-      name: "Schwabing (Herzogstraße)",
-      addr: "Herzogstraße 119, 80796 München",
-      tel: "089 3081984",
-      hours: "Di–Sa 09:00–19:00",
-      book: "https://buchung.treatwell.de/ort/biohairspa-muenchen-herzogstr",
-      preise: {
-        damen_schnitt: [
-          { name: "Pflege, Kopfmassage & Styling", preis: "49 €", dauer: "40 Min." },
-          { name: "Pflege, Kopfmassage & Event-Style", preis: "59 €", dauer: "45 Min." },
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "75 €", dauer: "1 Std." }
-        ],
-        herren_schnitt: [
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "55 €", dauer: "30 Min." }
-        ],
-        farbe: [
-          { name: "Organic Ansatzcoloration & Styling", preis: "124 €" },
-          { name: "Organic Ansatzcoloration, Schnitt & Styling", preis: "150 €" },
-          { name: "Organic Coloration & Styling", preis: "139 €" },
-          { name: "Organic Coloration, Schnitt & Styling", preis: "165 €" },
-          { name: "Strähnen halber Kopf & Styling", preis: "148 €" },
-          { name: "Strähnen halber Kopf, Schnitt & Styling", preis: "174 €" },
-          { name: "Strähnen ganzer Kopf & Styling", preis: "173 €" },
-          { name: "Strähnen ganzer Kopf, Schnitt & Styling", preis: "199 €" },
-          { name: "Balayage & Ombré & Styling", preis: "194 €" },
-          { name: "Balayage & Ombré, Schnitt & Styling", preis: "220 €" },
-          { name: "Organic Cover Grey & Styling", preis: "139 €" },
-          { name: "Organic Cover Grey, Schnitt & Styling", preis: "165 €" }
-        ],
-        kopfhaut: [
-          { name: "Schuppen-Behandlung", preis: "19 €" },
-          { name: "Trockene Kopfhaut", preis: "19 €" },
-          { name: "Fettige Kopfhaut (Tiefenreinigung)", preis: "26 €" },
-          { name: "Sensible/juckende Kopfhaut", preis: "19 €" },
-          { name: "Schwitzende Kopfhaut (Tiefenreinigung)", preis: "26 €" },
-          { name: "Mineralbehandlung Kopfhaut", preis: "19 €" },
-          { name: "Extra Wellness Kopfmassage", preis: "20 €" }
-        ]
-      }
-    },
-    innenstadt: {
-      name: "Innenstadt (Brunnstraße)",
-      addr: "Brunnstraße 9, 80331 München",
-      tel: "089 24212477",
-      hours: "Di–Sa 09:00–19:00",
-      book: "https://buchung.treatwell.de/ort/biohairspa-muenchen-innenstadt/",
-      preise: {
-        damen_schnitt: [
-          { name: "Pflege, Kopfmassage & Styling", preis: "49 €", dauer: "40 Min." },
-          { name: "Pflege, Kopfmassage & Event-Style", preis: "59 €", dauer: "45 Min." },
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "79 €", dauer: "1 Std." },
-          { name: "Chef Cut (Gianluca) Damen", preis: "89 €", dauer: "1 Std." }
-        ],
-        herren_schnitt: [
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "59 €" },
-          { name: "Chef Cut (Gianluca) Herren", preis: "69 €" }
-        ],
-        farbe: [
-          { name: "Organic Ansatzcoloration & Styling", preis: "128 €" },
-          { name: "Organic Ansatzcoloration, Schnitt & Styling", preis: "158 €" },
-          { name: "Organic Coloration & Styling", preis: "144 €" },
-          { name: "Organic Coloration, Schnitt & Styling", preis: "174 €" },
-          { name: "Strähnen halber Kopf & Styling", preis: "153 €" },
-          { name: "Strähnen halber Kopf, Schnitt & Styling", preis: "183 €" },
-          { name: "Strähnen ganzer Kopf & Styling", preis: "178 €" },
-          { name: "Strähnen ganzer Kopf, Schnitt & Styling", preis: "208 €" },
-          { name: "Balayage & Ombré & Styling", preis: "204 €" },
-          { name: "Balayage & Ombré, Schnitt & Styling", preis: "234 €" },
-          { name: "Organic Cover Grey & Styling", preis: "144 €" },
-          { name: "Organic Cover Grey, Schnitt & Styling", preis: "174 €" }
-        ],
-        kopfhaut: [
-          { name: "Schuppen-Behandlung", preis: "19 €" },
-          { name: "Trockene Kopfhaut", preis: "19 €" },
-          { name: "Fettige Kopfhaut (Tiefenreinigung)", preis: "26 €" },
-          { name: "Sensible/juckende Kopfhaut", preis: "19 €" },
-          { name: "Schwitzende Kopfhaut (Tiefenreinigung)", preis: "26 €" },
-          { name: "Mineralbehandlung Kopfhaut", preis: "19 €" },
-          { name: "Extra Wellness Kopfmassage", preis: "20 €" },
-          { name: "Mini-Synergy Kopfhaut Detox", preis: "50 €" },
-          { name: "Intensivbehandlung Kopfhaut Detox", preis: "75 €" }
-        ]
-      }
-    },
-    feilitzsch: {
-      name: "Feilitzschstraße (Derma Cosmetics)",
-      addr: "Feilitzschstraße 14, 80802 München",
-      tel: "089 38888866",
-      hours: "Di–Sa 09:00–19:00",
-      book: "https://buchung.treatwell.de/ort/biohairspa-derma-cosmetics-feilitzschstrasse/",
-      preise: {
-        damen_schnitt: [
-          { name: "Pflege, Kopfmassage & Styling", preis: "49 €" },
-          { name: "Pflege, Kopfmassage & Event-Style", preis: "59 €" },
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "79 €" }
-        ],
-        herren_schnitt: [
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "59 €" }
-        ],
-        farbe: [
-          { name: "Organic Ansatzcoloration & Styling", preis: "128 €" },
-          { name: "Organic Ansatzcoloration, Schnitt & Styling", preis: "158 €" },
-          { name: "Organic Coloration & Styling", preis: "144 €" },
-          { name: "Organic Coloration, Schnitt & Styling", preis: "174 €" },
-          { name: "Strähnen halber Kopf & Styling", preis: "153 €" },
-          { name: "Strähnen halber Kopf, Schnitt & Styling", preis: "183 €" },
-          { name: "Strähnen ganzer Kopf & Styling", preis: "178 €" },
-          { name: "Strähnen ganzer Kopf, Schnitt & Styling", preis: "208 €" },
-          { name: "Balayage & Ombré & Styling", preis: "204 €" },
-          { name: "Balayage & Ombré, Schnitt & Styling", preis: "234 €" },
-          { name: "Organic Cover Grey & Styling", preis: "144 €" },
-          { name: "Organic Cover Grey, Schnitt & Styling", preis: "174 €" }
-        ],
-        facials: [
-          { name: "Gesichtsbehandlung HYDRO 30 Min.", preis: "50 €" },
-          { name: "Gesichtsbehandlung HYDRO 60 Min.", preis: "90 €" },
-          { name: "Detox Face Treatment 30 Min.", preis: "50 €" },
-          { name: "Detox Face Treatment 60 Min.", preis: "90 €" },
-          { name: "Face Glow Treatment 30 Min.", preis: "50 €" },
-          { name: "Face Glow Treatment 60 Min.", preis: "90 €" },
-          { name: "Straffende Gesichtsbehandlung 30 Min.", preis: "50 €" },
-          { name: "Straffende Gesichtsbehandlung 60 Min.", preis: "90 €" },
-          { name: "Face Synergy Aromatherapie 30 Min.", preis: "50 €" },
-          { name: "Face Synergy Aromatherapie 60 Min.", preis: "90 €" }
-        ],
-        massagen: [
-          { name: "Körpermassage Minz-/Mandelöl 60 Min.", preis: "85 €" },
-          { name: "Körpermassage Minz-/Mandelöl 90 Min.", preis: "115 €" },
-          { name: "Körper Rose", preis: "95 €" },
-          { name: "Entspannungsmassage (Aromaöl) 60 Min.", preis: "90 €" },
-          { name: "Entspannungsmassage (Aromaöl) 90 Min.", preis: "120 €" },
-          { name: "Schwangerschaftsmassage", preis: "95 €" },
-          { name: "Sportmassage/Büromassage 60 Min.", preis: "90 €" },
-          { name: "Sportmassage/Büromassage 90 Min.", preis: "120 €" },
-          { name: "Lomi Lomi Massage 60 Min.", preis: "95 €" },
-          { name: "Lomi Lomi Massage 90 Min.", preis: "125 €" },
-          { name: "Ayurveda Abhyanga 60 Min.", preis: "95 €" },
-          { name: "Ayurveda Abhyanga 90 Min.", preis: "125 €" },
-          { name: "Ayurveda Vishesh 60 Min.", preis: "95 €" },
-          { name: "Ayurveda Vishesh 90 Min.", preis: "125 €" },
-          { name: "Kombi Gesicht/Kopf/Nacken", preis: "50 €" },
-          { name: "Kombi Fuß-/Beinmassage", preis: "75 €" },
-          { name: "Anti-Stress Express", preis: "50 €" },
-          { name: "Fußreflexzonenmassage", preis: "50 €" },
-          { name: "Wasser-Ring Erlebnis 60 Min.", preis: "125 €" },
-          { name: "Wasser-Ring Erlebnis 90 Min.", preis: "184 €" },
-          { name: "Cleopatra (2 Std.)", preis: "184 €" }
-        ]
-      }
-    },
-    bogenhausen: {
-      name: "Bogenhausen (Derma Cosmetics)",
-      addr: "Ismaninger Straße 42, 81675 München",
-      tel: "089 24210400",
-      hours: "Di–Sa 09:00–19:00",
-      book: "https://buchung.treatwell.de/ort/biohairspa-derma-cosmetics-bogenhausen/",
-      preise: {
-        damen_schnitt: [
-          { name: "Pflege, Kopfmassage & Styling", preis: "49 €" },
-          { name: "Pflege, Kopfmassage & Event-Style", preis: "59 €" },
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "79 €" },
-          { name: "Chef Cut (Gianluca) Damen", preis: "89 €" }
-        ],
-        herren_schnitt: [
-          { name: "Pflege, Kopfmassage, Schnitt & Styling", preis: "59 €" },
-          { name: "Chef Cut (Gianluca) Herren", preis: "69 €" }
-        ],
-        farbe: [
-          { name: "Organic Ansatzcoloration & Styling", preis: "128 €" },
-          { name: "Organic Ansatzcoloration, Schnitt & Styling", preis: "158 €" },
-          { name: "Organic Coloration & Styling", preis: "144 €" },
-          { name: "Organic Coloration, Schnitt & Styling", preis: "174 €" },
-          { name: "Strähnen halber Kopf & Styling", preis: "153 €" },
-          { name: "Strähnen halber Kopf, Schnitt & Styling", preis: "183 €" },
-          { name: "Strähnen ganzer Kopf & Styling", preis: "178 €" },
-          { name: "Strähnen ganzer Kopf, Schnitt & Styling", preis: "208 €" },
-          { name: "Balayage & Ombré & Styling", preis: "204 €" },
-          { name: "Balayage & Ombré, Schnitt & Styling", preis: "234 €" },
-          { name: "Organic Cover Grey & Styling", preis: "144 €" },
-          { name: "Organic Cover Grey, Schnitt & Styling", preis: "174 €" }
-        ],
-        facials: [
-          { name: "Gesichtsbehandlung HYDRO 30 Min.", preis: "50 €" },
-          { name: "Gesichtsbehandlung HYDRO 60 Min.", preis: "90 €" },
-          { name: "Detox Face Treatment 30 Min.", preis: "50 €" },
-          { name: "Detox Face Treatment 60 Min.", preis: "90 €" },
-          { name: "Face Glow Treatment 30 Min.", preis: "50 €" },
-          { name: "Face Glow Treatment 60 Min.", preis: "90 €" },
-          { name: "Straffende Gesichtsbehandlung 30 Min.", preis: "50 €" },
-          { name: "Straffende Gesichtsbehandlung 60 Min.", preis: "90 €" },
-          { name: "Face Synergy Aromatherapie 30 Min.", preis: "50 €" },
-          { name: "Face Synergy Aromatherapie 60 Min.", preis: "90 €" }
-        ],
-        massagen: [
-          { name: "Körpermassage Minz-/Mandelöl 60 Min.", preis: "85 €" },
-          { name: "Körpermassage Minz-/Mandelöl 90 Min.", preis: "115 €" },
-          { name: "Körper Rose", preis: "95 €" },
-          { name: "Entspannungsmassage (Aromaöl) 60 Min.", preis: "90 €" },
-          { name: "Entspannungsmassage (Aromaöl) 90 Min.", preis: "120 €" },
-          { name: "Schwangerschaftsmassage", preis: "95 €" },
-          { name: "Sportmassage/Büromassage 60 Min.", preis: "90 €" },
-          { name: "Sportmassage/Büromassage 90 Min.", preis: "120 €" },
-          { name: "Lomi Lomi Massage 60 Min.", preis: "95 €" },
-          { name: "Lomi Lomi Massage 90 Min.", preis: "125 €" },
-          { name: "Ayurveda Abhyanga 60 Min.", preis: "95 €" },
-          { name: "Ayurveda Abhyanga 90 Min.", preis: "125 €" },
-          { name: "Ayurveda Vishesh 60 Min.", preis: "95 €" },
-          { name: "Ayurveda Vishesh 90 Min.", preis: "125 €" },
-          { name: "Kombi Gesicht/Kopf/Nacken", preis: "50 €" },
-          { name: "Kombi Fuß-/Beinmassage", preis: "75 €" },
-          { name: "Anti-Stress Express", preis: "50 €" },
-          { name: "Fußreflexzonenmassage", preis: "50 €" },
-          { name: "Cleopatra", preis: "184 €" }
-        ]
-      }
-    }
-  };
+  // Position erzwingen
+  widget.style.cssText='position:fixed!important;right:22px!important;bottom:22px!important;left:auto!important;top:auto!important;z-index:2147483647!important;display:flex;flex-direction:column;align-items:flex-end;gap:14px;font-family:sans-serif;pointer-events:all;';
 
-  function detectSalon(t) {
-    if (t.match(/bogenhausen|ismaninger/)) return 'bogenhausen';
-    if (t.match(/feilitzsch|freiheit|derma/)) return 'feilitzsch';
-    if (t.match(/innenstadt|brunns|zentrum|altstadt|mitte/)) return 'innenstadt';
-    if (t.match(/schwabing|herzog/)) return 'schwabing';
-    return null;
-  }
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmt(text){var h=esc(text||'');h=h.replace(/(https?:\/\/[^\s<]+)/g,function(u){return'<a href="'+u+'" target="_blank">'+u.replace(/^https?:\/\//,'')+'</a>';});h=h.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');h=h.replace(/\n/g,'<br>');return h;}
+  function addMsg(role,text){var row=document.createElement('div');row.className='bhs-row '+role;var b=document.createElement('div');b.className='bhs-bubble';b.innerHTML=fmt(text);row.appendChild(b);scroll.appendChild(row);scroll.scrollTop=scroll.scrollHeight;}
+  function showTyping(){var row=document.createElement('div');row.className='bhs-row bot';row.id='bhs-typing-row';row.innerHTML='<div class="bhs-typing"><span></span><span></span><span></span></div>';scroll.appendChild(row);scroll.scrollTop=scroll.scrollHeight;}
+  function hideTyping(){var r=document.getElementById('bhs-typing-row');if(r)r.remove();}
+  function renderQuick(){quickWrap.innerHTML='';var show=scroll.querySelectorAll('.bhs-row.user').length===0;quickWrap.style.display=show?'flex':'none';if(!show)return;QUICK.forEach(function(q){var btn=document.createElement('button');btn.textContent=q.label;btn.addEventListener('click',function(){sendText(q.q);});quickWrap.appendChild(btn);});}
+  function aiReply(userText){history.push({role:'user',content:userText});return fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-12)})}).then(function(r){return r.text().then(function(t){try{return JSON.parse(t);}catch(e){return{};}});}).then(function(d){var reply=d&&(d.reply||d.text||d.content);if(!reply||/Schluckauf|klemmt/.test(reply))reply=localReply(userText);history.push({role:'assistant',content:reply});return reply;}).catch(function(){var r=localReply(userText);history.push({role:'assistant',content:r});return r;});}
+  function sendText(text){var t=(text||'').trim();if(!t||busy)return;busy=true;addMsg('user',t);input.value='';input.style.height='auto';renderQuick();showTyping();aiReply(t).then(function(reply){hideTyping();addMsg('bot',reply);busy=false;});}
+  function openChat(){widget.classList.add('open');if(!greeted){addMsg('bot',GREETING);renderQuick();greeted=true;}setTimeout(function(){input.focus();},60);}
+  function closeChat(){widget.classList.remove('open');}
 
-  function salonPreisBlock(salonKey, kategorie) {
-    var s = SALONS[salonKey];
-    var items = s.preise[kategorie];
-    if (!items) return '';
-    return items.map(function(i){ return '• ' + i.name + ': **' + i.preis + '**' + (i.dauer ? ' (' + i.dauer + ')' : ''); }).join('\n');
-  }
-
-  function localReply(raw) {
-    var t = (raw || '').toLowerCase();
-    var salonKey = detectSalon(t);
-    var salon = salonKey ? SALONS[salonKey] : null;
-
-    var isDamen = t.match(/damen|dame|frau|frauen|ladies/);
-    var isHerren = t.match(/herren|herr|mann|männer/);
-    var isSchnitt = t.match(/schnitt|schneiden|haarschnitt/);
-    var isFarbe = t.match(/farbe|färben|coloration|strähnen|balayage|ombré|ombre|cover grey|ansatz/);
-    var isMassage = t.match(/massage|massagen|ayurveda|lomi|entspannung|sport|büromassage/);
-    var isFacial = t.match(/facial|gesicht|gesichtsbehandlung|face/);
-    var isKopfhaut = t.match(/kopfhaut|schuppen|kopfmassage/);
-    var isPreis = t.match(/preis|kostet|kosten|wie viel|wieviel/);
-    var isTermin = t.match(/termin|buchen|booking/);
-    var isOeffnung = t.match(/öffnung|geöffnet|offen|zeiten|wann/);
-    var isWo = t.match(/wo|adresse|standort|salon|salons/);
-
-    // Preisfragen mit Salon + Kategorie
-    if (isPreis || isSchnitt || isFarbe || isMassage || isFacial || isKopfhaut) {
-      if (salon) {
-        var antwort = '**' + salon.name + '**\n\n';
-        if (isDamen && isSchnitt) {
-          antwort += '**Damenschnitte:**\n' + salonPreisBlock(salonKey, 'damen_schnitt');
-        } else if (isHerren && isSchnitt) {
-          antwort += '**Herrenschnitte:**\n' + salonPreisBlock(salonKey, 'herren_schnitt');
-        } else if (isSchnitt) {
-          antwort += '**Damenschnitte:**\n' + salonPreisBlock(salonKey, 'damen_schnitt') + '\n\n**Herrenschnitte:**\n' + salonPreisBlock(salonKey, 'herren_schnitt');
-        } else if (isFarbe) {
-          antwort += '**Farbbehandlungen:**\n' + salonPreisBlock(salonKey, 'farbe');
-        } else if (isMassage && (salonKey === 'feilitzsch' || salonKey === 'bogenhausen')) {
-          antwort += '**Massagen:**\n' + salonPreisBlock(salonKey, 'massagen');
-        } else if (isFacial && (salonKey === 'feilitzsch' || salonKey === 'bogenhausen')) {
-          antwort += '**Gesichtsbehandlungen:**\n' + salonPreisBlock(salonKey, 'facials');
-        } else if (isKopfhaut) {
-          antwort += '**Kopfhautbehandlungen:**\n' + salonPreisBlock(salonKey, 'kopfhaut');
-        } else {
-          // Allgemeine Preisfrage für diesen Salon
-          antwort += '**Damenschnitte:**\n' + salonPreisBlock(salonKey, 'damen_schnitt') + '\n\n**Herrenschnitte:**\n' + salonPreisBlock(salonKey, 'herren_schnitt') + '\n\n**Farbbehandlungen (Auswahl):**\n• Organic Ansatzcoloration ab ' + salon.preise.farbe[0].preis + '\n• Balayage ab ' + salon.preise.farbe[8].preis;
-        }
-        antwort += '\n\n📞 ' + salon.tel + '\nTermine: ' + salon.book;
-        return antwort;
-      }
-      // Kein Salon genannt
-      if (isMassage) return 'Massagen gibt es in unseren **Derma Cosmetics Salons**:\n• **Feilitzschstraße** (📞 089 38888866)\n• **Bogenhausen** (📞 089 24210400)\n\nPreise ab 50 € (Kombi-Massagen) bis 125 € (90 Min. Massage). Welchen Salon möchtest du?';
-      if (isFacial) return 'Gesichtsbehandlungen gibt es in unseren **Derma Cosmetics Salons**:\n• **Feilitzschstraße** (📞 089 38888866)\n• **Bogenhausen** (📞 089 24210400)\n\nPreise: 50 € (30 Min.) oder 90 € (60 Min.). Welchen Salon möchtest du?';
-      if (isDamen && isSchnitt) return 'Damenschnitte kosten je nach Salon:\n• **Schwabing**: ab 49 €\n• **Innenstadt**: ab 49 € (Chef Cut 89 €)\n• **Feilitzschstraße**: ab 49 €\n• **Bogenhausen**: ab 49 € (Chef Cut 89 €)\n\nWelcher Salon liegt dir am nächsten?';
-      if (isHerren && isSchnitt) return 'Herrenschnitte kosten je nach Salon:\n• **Schwabing**: 55 €\n• **Innenstadt**: 59 € (Chef Cut 69 €)\n• **Feilitzschstraße**: 59 €\n• **Bogenhausen**: 59 € (Chef Cut 69 €)\n\nWelcher Salon liegt dir am nächsten?';
-      return 'Unsere Preise variieren je nach Salon und Leistung. Für welchen Standort und welche Behandlung interessierst du dich?\n\n**Unsere Salons:**\n• Schwabing, Innenstadt (nur Haare)\n• Feilitzschstraße, Bogenhausen (Haare + Massagen + Kosmetik)';
-    }
-
-    if (isTermin) {
-      if (salon) return 'Termine für **' + salon.name + '** buchst du hier:\n' + salon.book + '\n\nOder ruf an: 📞 ' + salon.tel;
-      return 'Termine online buchen:\n• Schwabing: https://buchung.treatwell.de/ort/biohairspa-muenchen-herzogstr\n• Innenstadt: https://buchung.treatwell.de/ort/biohairspa-muenchen-innenstadt/\n• Feilitzschstraße: https://buchung.treatwell.de/ort/biohairspa-derma-cosmetics-feilitzschstrasse/\n• Bogenhausen: https://buchung.treatwell.de/ort/biohairspa-derma-cosmetics-bogenhausen/';
-    }
-
-    if (isOeffnung) {
-      if (salon) return '**' + salon.name + '**\n🕑 ' + salon.hours + '\n\n(Montag & Sonntag geschlossen)';
-      return 'Alle Salons sind **Di–Sa 09:00–19:00** geöffnet.\n(Montag & Sonntag geschlossen)\n\n📞 Schwabing: 089 3081984\n📞 Innenstadt: 089 24212477\n📞 Feilitzschstraße: 089 38888866\n📞 Bogenhausen: 089 24210400';
-    }
-
-    if (isWo) {
-      return 'Wir haben **4 Salons in München**:\n\n• **Schwabing** – Herzogstraße 119\n• **Innenstadt** – Brunnstraße 9\n• **Feilitzschstraße** – Feilitzschstraße 14 (Derma Cosmetics)\n• **Bogenhausen** – Ismaninger Straße 42 (Derma Cosmetics)\n\nWelcher Salon interessiert dich?';
-    }
-
-    return 'Ich helfe dir gern! 🌿 Ich kann dir bei **Preisen**, **Terminen**, **Öffnungszeiten** und unseren **4 Salons** weiterhelfen. Was möchtest du wissen?';
-  }
-
-  var history = [];
-
-  function aiReply(userText) {
-    history.push({ role: 'user', content: userText });
-    return fetch(AI_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history.slice(-12) })
-    })
-    .then(function(r) { return r.text().then(function(t) { try { return JSON.parse(t); } catch(e) { return {}; } }); })
-    .then(function(d) {
-      var reply = (d && (d.reply || d.text || d.content));
-      if (!reply || reply.indexOf('Schluckauf') !== -1 || reply.indexOf('klemmt') !== -1) {
-        reply = localReply(userText);
-      }
-      history.push({ role: 'assistant', content: reply });
-      return reply;
-    })
-    .catch(function() {
-      var r = localReply(userText);
-      history.push({ role: 'assistant', content: r });
-      return r;
-    });
-  }
-
-  var widget = document.getElementById('bhs-widget');
-  var scroll = document.getElementById('bhs-scroll');
-  var quickWrap = document.getElementById('bhs-quick');
-  var input = document.getElementById('bhs-text');
-  var greeted = false;
-
-  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function fmt(text) {
-    var h = esc(text || '');
-    h = h.replace(/(https?:\/\/[^\s)]+)(?=[)\s]|$)/g, function(u){ var c=u.replace(/[.,;]$/,''); return '<a href="'+c+'" target="_blank" rel="noopener">'+c.replace(/^https?:\/\//,'')+'</a>'; });
-    h = h.replace(/(089[\s]?\d{6,8})/g, function(p){ var tel='+49'+p.replace(/[^\d]/g,'').replace(/^0/,''); return '<a href="tel:'+tel+'">'+p+'</a>'; });
-    h = h.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-    h = h.replace(/\n/g,'<br>');
-    return h;
-  }
-
-  function addMessage(role, text) {
-    var row = document.createElement('div');
-    row.className = 'bhs-row ' + role;
-    var b = document.createElement('div');
-    b.className = 'bhs-bubble';
-    b.innerHTML = fmt(text);
-    row.appendChild(b);
-    scroll.appendChild(row);
-    scroll.scrollTop = scroll.scrollHeight;
-  }
-
-  function showTyping() {
-    var row = document.createElement('div');
-    row.className = 'bhs-row bot';
-    row.id = 'bhs-typing-row';
-    row.innerHTML = '<div class="bhs-typing"><span></span><span></span><span></span></div>';
-    scroll.appendChild(row);
-    scroll.scrollTop = scroll.scrollHeight;
-  }
-
-  function hideTyping() {
-    var r = document.getElementById('bhs-typing-row');
-    if (r) r.remove();
-  }
-
-  function renderQuick() {
-    quickWrap.innerHTML = '';
-    var show = scroll.querySelectorAll('.bhs-row.user').length === 0;
-    quickWrap.style.display = show ? 'flex' : 'none';
-    if (!show) return;
-    QUICK.forEach(function(q) {
-      var btn = document.createElement('button');
-      btn.textContent = q.label;
-      btn.addEventListener('click', function(){ sendText(q.q); });
-      quickWrap.appendChild(btn);
-    });
-  }
-
-  var busy = false;
-  function sendText(text) {
-    var t = (text || '').trim();
-    if (!t || busy) return;
-    busy = true;
-    addMessage('user', t);
-    input.value = '';
-    input.style.height = 'auto';
-    renderQuick();
-    showTyping();
-    aiReply(t).then(function(reply) {
-      hideTyping();
-      addMessage('bot', reply);
-      busy = false;
-    });
-  }
-
-  function openChat() {
-    widget.classList.add('open');
-    if (!greeted) { addMessage('bot', GREETING); renderQuick(); greeted = true; }
-    setTimeout(function(){ input.focus(); }, 60);
-  }
-
-  function closeChat() { widget.classList.remove('open'); }
-
-  document.getElementById('bhs-launch').addEventListener('click', function(){ widget.classList.contains('open') ? closeChat() : openChat(); });
-  document.getElementById('bhs-close').addEventListener('click', closeChat);
-  document.getElementById('bhs-send').addEventListener('click', function(){ sendText(input.value); });
-  input.addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendText(input.value); } });
-  input.addEventListener('input', function(){ input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 96)+'px'; });
+  document.getElementById('bhs-launch').addEventListener('click',function(){widget.classList.contains('open')?closeChat():openChat();});
+  document.getElementById('bhs-close').addEventListener('click',closeChat);
+  document.getElementById('bhs-send').addEventListener('click',function(){sendText(input.value);});
+  input.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendText(input.value);}});
+  input.addEventListener('input',function(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,96)+'px';});
 })();
 </script>
-</body></html>
+</body>
+</html>
